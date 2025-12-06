@@ -1,19 +1,40 @@
-import { Worker } from 'bullmq';
-import { redisOptions, QUEUE_NAME } from '../config';
+import { Worker } from "bullmq";
+import { redisOptions, QUEUE_NAME } from "../config";
+import { scrapeUrl } from "./scrapers/baseScraper"; // <--- Import the scraper
 
-console.log('[Worker] Crawler service starting...');
+console.log("[Worker] Crawler service starting...");
 
-const worker = new Worker(QUEUE_NAME, async (job) => {
+const worker = new Worker(
+  QUEUE_NAME,
+  async (job) => {
+    const { url } = job.data;
 
-  console.log(`[Worker] Picking up job ${job.id}`);
-  console.log(`[Worker] Scraping URL: ${job.data.url}`);
+    console.log(`[Worker] Scraping URL: ${url}`);
 
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-  
-  console.log(`[Worker] Finished processing: ${job.data.url}`);
+    try {
+      const metadata = await scrapeUrl(url);
 
-}, { connection: redisOptions });
+      console.log("[Worker] Found Metadata:");
+      console.log(
+        `Title:       ${metadata.title?.substring(0, 50)}${
+          metadata.title?.length > 50 ? "..." : ""
+        }`
+      );
+      console.log(`Image:       ${metadata.image}`);
+      console.log(
+        `Description: ${metadata.description?.substring(0, 80)}${
+          metadata.description?.length > 80 ? "..." : ""
+        }`
+      );
+    } catch (err: any) {
+      console.error(`[Worker] Failed to scrape ${url}: ${err.message}`);
 
-worker.on('failed', (job, err) => {
+      throw err;
+    }
+  },
+  { connection: redisOptions }
+);
+
+worker.on("failed", (job, err) => {
   console.error(`[Worker] Job ${job?.id} failed: ${err.message}`);
 });
