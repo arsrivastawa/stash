@@ -2,6 +2,7 @@ import express from "express";
 import { createStashQueue } from "../helper/createStash";
 import { saveController } from "./controllers/saveController";
 import { createPrismaClient } from "../helper/initiatePrisma";
+import cors from 'cors'
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -9,6 +10,7 @@ const port = process.env.PORT || 3000;
 createStashQueue()
 createPrismaClient();
 
+app.use(cors())
 app.use(express.json());
 
 app.get("/", (req, res) => {

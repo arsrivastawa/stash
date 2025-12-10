@@ -2,6 +2,7 @@ import { getStashQueue } from "../../helper/createStash";
 import { getPrismaClient } from "../../helper/initiatePrisma";
 
 export const saveController = async ({ req, res }: { req: any; res: any }) => {
+  console.log("\n\n\n", req, "\n\n\n")
   const { url } = req.body;
   if (!url) res.status(400).send({ error: "URL is required" });
   const stashQueue = getStashQueue();
