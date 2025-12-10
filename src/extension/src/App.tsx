@@ -33,7 +33,7 @@ const App: React.FC = () => {
           currentWindow: true,
         });
         if (tab && tab.url) {
-          console.log(tab)
+          console.log(tab);
           setCurrentTabUrl(tab.url);
         }
       } catch (err) {
@@ -69,27 +69,34 @@ const App: React.FC = () => {
     if (source === "manual") setIsManualSaving(true);
 
     try {
-      console.log(url)
+      console.log(url);
       const res = await axios.post("http://localhost:3000/save", { url });
 
       if (!res.status || res.status < 200 || res.status >= 300) {
         throw new Error(`Server responded with ${res.status}`);
       }
+      if (res.status === 201) {
+        setStatus({
+          type: "success",
+          message: "Saved to your Stash.",
+        });
 
-      setStatus({
-        type: "success",
-        message: "Saved to your Stash.",
-      });
-
-      if (source === "manual") {
-        setManualUrl("");
+        if (source === "manual") {
+          setManualUrl("");
+        }
+      }
+      if (res.status === 200) {
+        setStatus({
+          type: "error",
+          message: "This URL is already in your Stash.",
+        });
       }
     } catch (err) {
       console.log(err);
       setStatus({
         type: "error",
         message:
-          "Couldn’t reach Stash. Is the server running on localhost:3000?",
+          "Couldn’t reach Stash. Please ensure the API server is running.",
       });
     } finally {
       setIsQuickSaving(false);
@@ -119,18 +126,12 @@ const App: React.FC = () => {
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="space-y-0.5">
-          <h1 className="text-sm font-semibold tracking-tight text-zinc-100">
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
             Stash
           </h1>
-          <p className="text-[11px] text-zinc-500">
+          <p className="text-sm text-zinc-500">
             A calm inbox for things you don’t want to lose.
           </p>
-        </div>
-        <div className="inline-flex items-center gap-1 rounded-full border border-zinc-800/80 bg-zinc-900/70 px-2 py-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[10px] uppercase tracking-[0.12em] text-zinc-400">
-            Popup
-          </span>
         </div>
       </div>
 
@@ -147,16 +148,14 @@ const App: React.FC = () => {
           <div className="relative p-3.5 space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-medium text-zinc-100">
-                  Quick Stash
-                </p>
-                <p className="mt-0.5 text-[11px] text-zinc-400">
+                <p className="text-sm font-medium text-zinc-100">Quick Stash</p>
+                <p className="mt-0.5 text-[12px] text-zinc-400">
                   Save the current tab instantly with one click.
                 </p>
               </div>
               <div className="flex items-center gap-1.5 rounded-full bg-zinc-900/80 px-2 py-1">
                 <Link2 className="h-3 w-3 text-zinc-500" />
-                <span className="max-w-[170px] truncate text-[10px] text-zinc-400">
+                <span className="max-w-[170px] truncate text-[12px] text-zinc-400">
                   {currentTabUrl || "Fetching active tab…"}
                 </span>
               </div>
@@ -166,17 +165,13 @@ const App: React.FC = () => {
               onClick={handleQuickStash}
               disabled={!currentTabUrl || isBusy}
               whileHover={
-                !(!currentTabUrl || isBusy)
-                  ? { scale: 1.01, y: -1 }
-                  : undefined
+                !(!currentTabUrl || isBusy) ? { scale: 1.01, y: -1 } : undefined
               }
               whileTap={
-                !(!currentTabUrl || isBusy)
-                  ? { scale: 0.99, y: 0 }
-                  : undefined
+                !(!currentTabUrl || isBusy) ? { scale: 0.99, y: 0 } : undefined
               }
               className={[
-                "group relative flex h-9 w-full items-center justify-center overflow-hidden rounded-xl text-xs font-medium transition-all",
+                "group relative flex h-9 w-full items-center justify-center overflow-hidden rounded-xl text-sm font-medium transition-all",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
                 !currentTabUrl || isBusy
                   ? "cursor-not-allowed bg-zinc-800/80 text-zinc-500"
@@ -189,7 +184,7 @@ const App: React.FC = () => {
                   <span className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(244,244,245,0.26)_0,transparent_50%),radial-gradient(circle_at_100%_0%,rgba(219,234,254,0.26)_0,transparent_55%)]" />
                 </span>
               )}
-              <span className="relative inline-flex items-center gap-1.5">
+              <span className="relative cursor-pointer inline-flex items-center gap-1.5">
                 {isQuickSaving ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -220,10 +215,8 @@ const App: React.FC = () => {
         >
           <div className="p-3.5 space-y-2.5">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-medium text-zinc-100">
-                Manual Entry
-              </p>
-              <div className="inline-flex items-center gap-1 text-[10px] text-zinc-500">
+              <p className="text-sm font-medium text-zinc-100">Manual Entry</p>
+              <div className="inline-flex items-center gap-1 text-sm text-zinc-500">
                 <ExternalLink className="h-3 w-3" />
                 <span>Paste any link</span>
               </div>
@@ -236,7 +229,7 @@ const App: React.FC = () => {
                   value={manualUrl}
                   onChange={(e) => setManualUrl(e.target.value)}
                   placeholder="Paste a URL manually..."
-                  className="w-full bg-transparent text-[11px] text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
+                  className="w-full bg-transparent text-[12px] text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
                   spellCheck={false}
                 />
               </div>
@@ -256,7 +249,7 @@ const App: React.FC = () => {
                     : undefined
                 }
                 className={[
-                  "inline-flex h-8 items-center justify-center rounded-xl px-3 text-[11px] font-medium transition-all",
+                  "inline-flex h-8 items-center justify-center rounded-xl px-3 text-sm font-medium transition-all",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
                   !manualUrl.trim() || isBusy
                     ? "cursor-not-allowed border border-zinc-800 bg-zinc-900 text-zinc-500"
@@ -270,7 +263,7 @@ const App: React.FC = () => {
                 )}
               </motion.button>
             </div>
-            <p className="text-[10px] text-zinc-500">
+            <p className="text-[12px] text-zinc-500">
               Stash works best with article links, tweets, docs, and GitHub
               URLs.
             </p>
@@ -306,7 +299,7 @@ const App: React.FC = () => {
             >
               <div className="flex items-start gap-1.5">
                 <CheckCircle2 className="mt-px h-3.5 w-3.5 text-emerald-300" />
-                <p className="text-[11px] leading-snug text-emerald-100">
+                <p className="text-[12px] leading-snug text-emerald-100">
                   {status.message}
                 </p>
               </div>
