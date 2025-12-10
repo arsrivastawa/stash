@@ -4,6 +4,8 @@ node_modules/
 # Environment variables
 .env
 
+test.ts
+
 # Logs
 logs/
 *.log
@@ -38,3 +40,4 @@ pids/
 .env.development.local
 .env.test.local
 .env.production.local
+/src/generated/prisma

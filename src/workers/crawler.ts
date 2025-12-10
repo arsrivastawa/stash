@@ -1,8 +1,11 @@
 import { Worker } from "bullmq";
 import { redisOptions, QUEUE_NAME } from "../config";
 import { scrapeUrl } from "./scrapers/baseScraper"; // <--- Import the scraper
+import { getPrismaClient } from "../helper/initiatePrisma";
 
 console.log("[Worker] Crawler service starting...");
+
+const prisma = getPrismaClient();
 
 const worker = new Worker(
   QUEUE_NAME,
@@ -15,6 +18,21 @@ const worker = new Worker(
       const metadata = await scrapeUrl(url);
 
       console.log("[Worker] Found Metadata:");
+
+      const updatedItem = await prisma.item.update({
+        where: {
+          originalUrl: url,
+        },
+        data: {
+          isProcessed: true,
+          title: metadata.title,
+          description: metadata.description,
+          imageUrl: metadata.image,
+        },
+      });
+
+      console.log("[Worker] Updated item to database with ID:", updatedItem.id);
+
       console.log(
         `Title:       ${metadata.title?.substring(0, 50)}${
           metadata.title?.length > 50 ? "..." : ""

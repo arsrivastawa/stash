@@ -1,11 +1,13 @@
 import express from "express";
-import { Queue } from "bullmq";
-import { redisOptions, QUEUE_NAME } from "../config";
+import { createStashQueue } from "../helper/createStash";
+import { saveController } from "./controllers/saveController";
+import { createPrismaClient } from "../helper/initiatePrisma";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-const stashQueue = new Queue(QUEUE_NAME, { connection: redisOptions });
+createStashQueue()
+createPrismaClient();
 
 app.use(express.json());
 
@@ -13,22 +15,7 @@ app.get("/", (req, res) => {
   res.send("Stash Queue API is running");
 });
 
-app.post("/save", async (req, res) => {
-  const { url } = req.body;
-  if (!url) res.status(400).send({ error: "URL is required" });
-
-  try {
-    const job = await stashQueue.add("save-url", { url });
-    res
-      .status(200)
-      .send({
-        status: "queued",
-        jobId: job.id,
-      });
-  } catch (error) {
-    res.status(500).send({ error: "Failed to add job to the queue" });
-  }
-});
+app.use("/save", (req, res) => saveController({ req, res }));
 
 app.listen(port, () => {
   console.log(`[API] Server is running on http://localhost:${port}`);
