@@ -10,7 +10,7 @@ const prisma = getPrismaClient();
 const worker = new Worker(
   QUEUE_NAME,
   async (job) => {
-    const { url } = job.data;
+    const { url, userId } = job.data;
 
     console.log(`[Worker] Scraping URL: ${url}`);
 
@@ -21,7 +21,10 @@ const worker = new Worker(
 
       const updatedItem = await prisma.item.update({
         where: {
-          originalUrl: url,
+          userId_originalUrl: {
+            userId,
+            originalUrl: url,
+          },
         },
         data: {
           isProcessed: true,
@@ -31,7 +34,7 @@ const worker = new Worker(
         },
       });
 
-      console.log("[Worker] Updated item to database with ID:", updatedItem.id);
+      // console.log("[Worker] Updated item to database with ID:", updatedItem.id);
 
       console.log(
         `Title:       ${metadata.title?.substring(0, 50)}${

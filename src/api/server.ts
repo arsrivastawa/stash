@@ -1,8 +1,10 @@
-import express from "express";
+import express, { Request } from "express";
 import { createStashQueue } from "../helper/createStash";
 import { saveController } from "./controllers/saveController";
 import { createPrismaClient } from "../helper/initiatePrisma";
 import cors from 'cors'
+import { use } from "marked";
+import { AuthRequest, requireAuth } from "./middlewares/requireAuth";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,7 +19,12 @@ app.get("/", (req, res) => {
   res.send("Stash Queue API is running");
 });
 
-app.use("/save", (req, res) => saveController({ req, res }));
+app.post("/check", requireAuth, (req: AuthRequest, res) =>  {
+  res.json({ message: "Save endpoint", user: req.user !== undefined ? req.user : null });
+});
+//
+
+app.use("/save", requireAuth, (req: AuthRequest, res) => saveController({ req, res }));
 
 app.listen(port, () => {
   console.log(`[API] Server is running on http://localhost:${port}`);

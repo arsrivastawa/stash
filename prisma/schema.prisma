@@ -9,17 +9,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 1. Capitalize Model Name
+model User {
+  id        String   @id // Matches Supabase UUID
+  email     String   @unique
+  name      String?  // <--- 2. Made Optional to prevent signup errors
+  
+  items     Item[]   // Relation array
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Optional: Map to plural table name in DB if you prefer SQL standards
+  @@map("users") 
+}
+
 model Item {
   id           String   @id @default(uuid())
-  originalUrl  String   @map("original_url") @unique
+  originalUrl  String   @map("original_url")
   
-  // Scraped Metadata
+  // Update relation to use the Capitalized 'User' model
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String   @map("user_id")
+
   title        String?
   description  String?
   imageUrl     String?  @map("image_url")
+  isProcessed  Boolean  @default(false) @map("is_processed") // Added map for consistency
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
   
-  // Processing Status
-  isProcessed  Boolean  @default(false) @map("is_processed")
+  @@unique([userId, originalUrl])
   
-  createdAt    DateTime @default(now()) @map("created_at")
+  // Optional: Map to plural table name
+  @@map("items")
 }

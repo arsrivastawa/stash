@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "npx ts-node-dev src/api/server.ts",
+    "server": "npx ts-node-dev src/api/server.ts",
     "worker": "npx ts-node-dev src/workers/crawler.ts",
+    "frontend": "cd src/frontend && npm run dev",
+    "extension": "cd src/extension && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -20,6 +22,7 @@
   "homepage": "https://github.com/arsrivastawa/stash#readme",
   "dependencies": {
     "@prisma/client": "5.22.0",
+    "@supabase/supabase-js": "^2.89.0",
     "bullmq": "^5.65.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
