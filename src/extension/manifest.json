@@ -3,6 +3,10 @@
   "name": "Stash",
   "version": "1.0.0",
   "action": { "default_popup": "index.html" },
+  "background": {
+    "service_worker": "src/background.ts", 
+    "type": "module" 
+  },
   "content_scripts": [
     {
       "matches": ["https://*/*"],
@@ -10,5 +14,13 @@
       "run_at": "document_end"
     }
   ],
-  "permissions": ["storage", "activeTab"]
+  "permissions": ["storage", "activeTab"],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:5173/*",
+      "http://127.0.0.1:5173/*",
+      "http://127.0.0.1:8080/*",
+      "http://localhost:8080/*"
+    ]
+  }
 }

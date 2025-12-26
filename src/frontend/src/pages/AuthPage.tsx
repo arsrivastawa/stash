@@ -6,6 +6,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Mail, Lock, Layers } from "lucide-react";
+//
+
+const syncSessionToExtension = async (session: any) => {
+  // 1. The ID of your extension (Find this in chrome://extensions)
+  // CRITICAL: This ID must be static. If you are in dev mode, copy it from the browser.
+  const EXTENSION_ID = "henpenajjnpdajajlcolnjkpflhllpnm";
+
+  // 2. Check if the Chrome runtime API is available
+  if (window.chrome && chrome.runtime) {
+    console.log("Attempting to sync with extension...");
+
+    try {
+      chrome.runtime.sendMessage(
+        EXTENSION_ID,
+        { type: "SYNC_SESSION", session: session },
+        (response) => {
+          if (response && response.success) {
+            console.log("Extension synced successfully!");
+          } else {
+            console.log(
+              "Extension installed, but no response (check background script)."
+            );
+          }
+        }
+      );
+    } catch (err) {
+      // This happens if the extension is NOT installed
+      console.log("Extension not found or not installed.");
+    }
+  }
+};
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -16,13 +47,15 @@ const AuthPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session) {
-          navigate("/", { replace: true });
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        navigate("/", { replace: true });
+        console.log("first\n", session);
+        syncSessionToExtension(session);
       }
-    );
+    });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -56,7 +89,8 @@ const AuthPage = () => {
         if (error) throw error;
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -75,7 +109,8 @@ const AuthPage = () => {
       });
       if (error) throw error;
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
       setLoading(false);
     }

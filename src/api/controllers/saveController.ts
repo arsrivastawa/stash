@@ -45,7 +45,7 @@ export const saveController = async ({ req, res }: { req: any; res: any }) => {
     // Pass userId to the queue job too (in case the worker needs it)
     const job = await stashQueue.add("save-url", { url, userId });
     
-    res.status(200).send({
+    res.status(201).send({
       status: "queued",
       jobId: job.id,
     });

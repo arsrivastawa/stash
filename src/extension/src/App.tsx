@@ -6,6 +6,8 @@ import {
   AlertCircle,
   Loader2,
   ExternalLink,
+  LogIn,
+  ArrowRight,
 } from "lucide-react";
 import axios from "axios";
 
@@ -22,6 +24,8 @@ const App: React.FC = () => {
   const [isQuickSaving, setIsQuickSaving] = useState(false);
   const [isManualSaving, setIsManualSaving] = useState(false);
   const [status, setStatus] = useState<StatusState>({ type: "idle" });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
   // Grab current active tab URL
   useEffect(() => {
@@ -44,6 +48,31 @@ const App: React.FC = () => {
 
     fetchActiveTab();
   }, []);
+
+  useEffect(() => {
+    // Check Chrome Storage for the token
+    chrome.storage.local.get(
+      ["session"],
+      (result: {
+        session: { access_token: React.SetStateAction<string | null> };
+      }) => {
+        if (result.session?.access_token) {
+          // User is logged in!
+          setToken(result.session.access_token);
+          setIsLoggedIn(true);
+        } else {
+          // User is NOT logged in.
+          // Show a button that opens localhost:5173
+          setIsLoggedIn(false);
+        }
+      }
+    );
+  }, []);
+
+  const handleLoginRedirect = () => {
+    // Opens the website in a new tab for them to login
+    chrome.tabs.create({ url: "http://localhost:8080/auth" });
+  };
 
   const postUrlToStash = async (url: string, source: "quick" | "manual") => {
     if (!url) {
@@ -70,7 +99,15 @@ const App: React.FC = () => {
 
     try {
       console.log(url);
-      const res = await axios.post("http://localhost:3000/save", { url });
+      const res = await axios.post(
+        "http://localhost:3000/save",
+        { url: url },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // <--- This token came from storage
+          },
+        }
+      );
 
       if (!res.status || res.status < 200 || res.status >= 300) {
         throw new Error(`Server responded with ${res.status}`);
@@ -120,6 +157,45 @@ const App: React.FC = () => {
   };
 
   const isBusy = isQuickSaving || isManualSaving;
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-w-[360px] max-w-[420px] bg-zinc-950 text-zinc-100 font-inter p-6">
+        <div className="text-center space-y-4">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 border border-zinc-800 shadow-inner">
+            <LogIn className="h-6 w-6 text-indigo-400" />
+          </div>
+
+          <div className="space-y-1">
+            <h1 className="text-lg font-semibold tracking-tight text-zinc-100">
+              Welcome to Stash
+            </h1>
+            <p className="text-xs text-zinc-500 max-w-[260px] mx-auto leading-relaxed">
+              Please sign in on the website to enable saving from this
+              extension.
+            </p>
+          </div>
+
+          <motion.button
+            onClick={handleLoginRedirect}
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98, y: 0 }}
+            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition-all hover:shadow-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+          >
+            <span>Sign In / Connect</span>
+            <ArrowRight className="h-4 w-4 opacity-70 transition-transform group-hover:translate-x-0.5" />
+
+            {/* Sheen effect */}
+            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+          </motion.button>
+
+          <p className="text-[10px] text-zinc-600">
+            Once logged in, click this extension again.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-w-[360px] max-w-[420px] bg-zinc-950 text-zinc-100 font-inter p-4 pb-5">
