@@ -10,8 +10,9 @@ import {
   ArrowRight,
 } from "lucide-react";
 import axios from "axios";
+import { API_URL, WEBSITE_URL } from "./config";
 
-declare const chrome: any; // For Chrome extension environment
+declare const chrome: any; 
 
 type StatusState =
   | { type: "idle" }
@@ -71,7 +72,7 @@ const App: React.FC = () => {
 
   const handleLoginRedirect = () => {
     // Opens the website in a new tab for them to login
-    chrome.tabs.create({ url: "http://localhost:8080/auth" });
+    chrome.tabs.create({ url: `${WEBSITE_URL}/auth` });
   };
 
   const postUrlToStash = async (url: string, source: "quick" | "manual") => {
@@ -83,7 +84,7 @@ const App: React.FC = () => {
       return;
     }
 
-    // Very light validation – enough for UX
+    // Very light validation - enough for UX
     const isProbablyUrl = /^https?:\/\/\S+$/i.test(url);
     if (!isProbablyUrl) {
       setStatus({
@@ -100,11 +101,11 @@ const App: React.FC = () => {
     try {
       console.log(url);
       const res = await axios.post(
-        "http://localhost:3000/save",
+        `${API_URL}/save`,
         { url: url },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // <--- This token came from storage
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -180,13 +181,13 @@ const App: React.FC = () => {
             onClick={handleLoginRedirect}
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98, y: 0 }}
-            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition-all hover:shadow-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-linear-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-500/20 transition-all hover:shadow-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
           >
             <span>Sign In / Connect</span>
             <ArrowRight className="h-4 w-4 opacity-70 transition-transform group-hover:translate-x-0.5" />
 
             {/* Sheen effect */}
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+            <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
           </motion.button>
 
           <p className="text-[10px] text-zinc-600">

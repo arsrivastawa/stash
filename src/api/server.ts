@@ -5,6 +5,8 @@ import { createPrismaClient } from "../helper/initiatePrisma";
 import cors from 'cors'
 import { use } from "marked";
 import { AuthRequest, requireAuth } from "./middlewares/requireAuth";
+import { getController } from "./controllers/getController";
+import { deleteController } from "./controllers/deleteController";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -19,12 +21,14 @@ app.get("/", (req, res) => {
   res.send("Stash Queue API is running");
 });
 
-app.post("/check", requireAuth, (req: AuthRequest, res) =>  {
-  res.json({ message: "Save endpoint", user: req.user !== undefined ? req.user : null });
-});
+// app.post("/check", requireAuth, (req: AuthRequest, res) =>  {
+//   res.json({ message: "Save endpoint", user: req.user !== undefined ? req.user : null });
+// });
 //
 
 app.use("/save", requireAuth, (req: AuthRequest, res) => saveController({ req, res }));
+app.use("/get", requireAuth, (req: AuthRequest, res) => getController({ req, res }));
+app.use("/delete", requireAuth, (req: AuthRequest, res) => deleteController({ req, res }));
 
 app.listen(port, () => {
   console.log(`[API] Server is running on http://localhost:${port}`);

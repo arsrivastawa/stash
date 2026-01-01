@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Link2, Loader2, Sparkles } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -22,18 +23,51 @@ const AddItemModal = ({ isOpen, onClose, onItemAdded }: AddItemModalProps) => {
 
     setLoading(true);
 
-    // Simulate saving (in a real app, this would call an API)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // 1. Get current authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
 
-    toast({
-      title: "Saved to Stash",
-      description: "Your content has been saved successfully.",
-    });
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "You must be logged in to save items.",
+        });
+        return;
+      }
 
-    setUrl("");
-    setLoading(false);
-    onItemAdded?.();
-    onClose();
+      // 2. Insert into Supabase (Instant Save)
+      // FIX: Cast 'supabase' to 'any' to completely bypass the missing type definition error
+      const { error } = await (supabase as any)
+        .from('items') 
+        .insert({
+          original_url: url,
+          user_id: user.id,
+          is_processed: false 
+        });
+
+      if (error) throw error;
+
+      // 3. Success Handler
+      toast({
+        title: "Saved to Stash",
+        description: "Link saved! We're fetching its details in the background.",
+      });
+
+      setUrl(""); // Clear input
+      onItemAdded?.(); // Refresh the list if needed
+      onClose(); // Close modal
+
+    } catch (error: any) {
+      console.error("Error saving item:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to save",
+        description: error.message || "Something went wrong. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,6 +115,7 @@ const AddItemModal = ({ isOpen, onClose, onItemAdded }: AddItemModalProps) => {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   className="pl-10 bg-secondary/50 border-border focus:border-primary focus:ring-primary"
+                  autoFocus 
                   required
                 />
               </div>

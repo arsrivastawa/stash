@@ -1,38 +1,26 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion"; // Added AnimatePresence
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Mail, Lock, Layers } from "lucide-react";
-//
+import { Loader2, Mail, Lock, Layers, User } from "lucide-react"; // Added User icon
 
 const syncSessionToExtension = async (session: any) => {
-  // 1. The ID of your extension (Find this in chrome://extensions)
-  // CRITICAL: This ID must be static. If you are in dev mode, copy it from the browser.
-  const EXTENSION_ID = "henpenajjnpdajajlcolnjkpflhllpnm";
-
-  // 2. Check if the Chrome runtime API is available
   if (window.chrome && chrome.runtime) {
     console.log("Attempting to sync with extension...");
-
     try {
       chrome.runtime.sendMessage(
-        EXTENSION_ID,
+        import.meta.env.VITE_EXTENSION_ID,
         { type: "SYNC_SESSION", session: session },
         (response) => {
           if (response && response.success) {
             console.log("Extension synced successfully!");
-          } else {
-            console.log(
-              "Extension installed, but no response (check background script)."
-            );
           }
         }
       );
     } catch (err) {
-      // This happens if the extension is NOT installed
       console.log("Extension not found or not installed.");
     }
   }
@@ -40,25 +28,28 @@ const syncSessionToExtension = async (session: any) => {
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
+
+  const [fullName, setFullName] = useState(""); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 1. Check active session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/", { replace: true });
-        console.log("first\n", session);
         syncSessionToExtension(session);
+        navigate("/", { replace: true });
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // 2. Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
+        syncSessionToExtension(session);
         navigate("/", { replace: true });
       }
     });
@@ -73,15 +64,29 @@ const AuthPage = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        // --- SIGN UP ---
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
+            // This triggers your SQL function to save the name!
+            data: {
+              name: fullName 
+            }
           },
         });
+        
         if (error) throw error;
+
+        // ✅ UX IMPROVEMENT: Tell user to check email
+        if (data.user && !data.session) {
+          alert("Success! Please check your email to verify your account.");
+          setIsSignUp(false); // Switch to login view
+        }
+
       } else {
+        // --- SIGN IN ---
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -109,8 +114,7 @@ const AuthPage = () => {
       });
       if (error) throw error;
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred";
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
       setLoading(false);
     }
@@ -150,6 +154,34 @@ const AuthPage = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            <AnimatePresence initial={false}>
+              {isSignUp && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-2 overflow-hidden"
+                >
+                  <Label htmlFor="fullname" className="text-muted-foreground">
+                    Full Name
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="fullname"
+                      type="text"
+                      placeholder="John Doe"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="pl-10 bg-secondary/50 border-border focus:border-primary focus:ring-primary"
+                      required={isSignUp} // Only required if signing up
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-muted-foreground">
                 Email
@@ -202,6 +234,7 @@ const AuthPage = () => {
             </Button>
           </form>
 
+          {/* ... (Rest of your component: Separator, Google Button, Toggle) ... */}
           <div className="my-6 flex items-center">
             <div className="flex-1 border-t border-border" />
             <span className="px-4 text-xs text-muted-foreground">OR</span>
@@ -215,7 +248,8 @@ const AuthPage = () => {
             disabled={loading}
             className="w-full border-border bg-secondary/30 text-foreground hover:bg-secondary/50"
           >
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+             {/* ... SVG Icon ... */}
+             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

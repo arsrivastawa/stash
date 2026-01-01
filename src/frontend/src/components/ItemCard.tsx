@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, Trash2, Play, Code, MessageCircle, FileText } from 'lucide-react';
-import type { StashItem, ItemType } from '@/lib/mockData';
+import type { ItemType } from '@/lib/mockData';
+import { StashItem } from '@/pages/Dashboard';
 
 interface ItemCardProps {
   item: StashItem;
   index: number;
+  isCompact?: boolean;
+  deleteHandler: (id: string) => void;
 }
 
 const typeIcons: Record<ItemType, React.ReactNode> = {
@@ -13,6 +16,7 @@ const typeIcons: Record<ItemType, React.ReactNode> = {
   code: <Code className="w-4 h-4" />,
   social: <MessageCircle className="w-4 h-4" />,
   article: <FileText className="w-4 h-4" />,
+  stashDefault: <FileText className="w-4 h-4" />,
 };
 
 const typeColors: Record<ItemType, string> = {
@@ -20,6 +24,7 @@ const typeColors: Record<ItemType, string> = {
   code: 'from-emerald-500/20 to-teal-500/20',
   social: 'from-blue-500/20 to-cyan-500/20',
   article: 'from-violet-500/20 to-purple-500/20',
+  stashDefault: 'from-foreground/10 to-foreground/5',
 };
 
 const sourceColors: Record<string, string> = {
@@ -30,7 +35,33 @@ const sourceColors: Record<string, string> = {
   Substack: 'text-orange-400',
 };
 
-const ItemCard = ({ item, index }: ItemCardProps) => {
+const parseDate = (dateString: string) =>{
+  const date = new Date(dateString);
+  const now = new Date();
+
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if(diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+  if(diffInSeconds < 3600){
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    return `${diffInMinutes} minutes ago`;
+  }
+  if(diffInSeconds < 86400){
+    const diffInHours = Math.floor(diffInSeconds / 3600);
+    return `${diffInHours} hours ago`;
+  }
+  const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+  if(diffInDays < 7) return `${diffInDays} days ago`;
+  if(diffInDays < 30){
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    return `${diffInWeeks} weeks ago`;
+  }
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if(diffInMonths < 12) return `${diffInMonths} months ago`;
+  const diffInYears = Math.floor(diffInDays / 365);
+  return `${diffInYears} years ago`;
+}
+
+const ItemCard = ({ item, index, deleteHandler, isCompact }: ItemCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -39,19 +70,19 @@ const ItemCard = ({ item, index }: ItemCardProps) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
         duration: 0.4, 
-        delay: index * 0.05,
+        // delay: 0.5,
         ease: [0.25, 0.46, 0.45, 0.94]
       }}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -6 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="group relative bg-card rounded-2xl overflow-hidden border border-border hover:border-border-subtle transition-all duration-300 card-glow hover:card-glow-hover break-inside-avoid mb-4"
     >
       {/* Image or Gradient Placeholder */}
-      {item.imageUrl ? (
+      {item.image_url && !isCompact ? (
         <div className="relative aspect-video overflow-hidden">
           <img
-            src={item.imageUrl}
+            src={item.image_url}
             alt={item.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -61,7 +92,7 @@ const ItemCard = ({ item, index }: ItemCardProps) => {
         <div className={`relative h-32 bg-gradient-to-br ${typeColors[item.type]}`}>
           <div className="absolute inset-0 flex items-center justify-center opacity-30">
             <div className="text-foreground scale-150">
-              {typeIcons[item.type]}
+              {item.type !== undefined ? typeIcons[item.type] : typeIcons.stashDefault}
             </div>
           </div>
           {/* Subtle pattern */}
@@ -85,16 +116,7 @@ const ItemCard = ({ item, index }: ItemCardProps) => {
         </p>
 
         {/* Meta */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={`${sourceColors[item.source] || 'text-muted-foreground'}`}>
-              {typeIcons[item.type]}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {item.source} · {item.savedAt}
-            </span>
-          </div>
-        </div>
+        
       </div>
 
       {/* Hover Actions */}
@@ -107,6 +129,7 @@ const ItemCard = ({ item, index }: ItemCardProps) => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => window.open(item.original_url, "_blank")}
           className="w-8 h-8 rounded-lg bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border-subtle transition-colors"
         >
           <ExternalLink className="w-4 h-4" />
@@ -114,6 +137,7 @@ const ItemCard = ({ item, index }: ItemCardProps) => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => deleteHandler(item.id)}
           className="w-8 h-8 rounded-lg bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/50 transition-colors"
         >
           <Trash2 className="w-4 h-4" />
@@ -123,7 +147,7 @@ const ItemCard = ({ item, index }: ItemCardProps) => {
       {/* Type Badge */}
       <div className="absolute top-3 left-3">
         <div className="px-2 py-1 rounded-md bg-background/90 backdrop-blur-sm border border-border text-xs text-muted-foreground capitalize">
-          {item.type}
+          {item.type !== undefined ? item.type : 'Unknown'}
         </div>
       </div>
     </motion.article>

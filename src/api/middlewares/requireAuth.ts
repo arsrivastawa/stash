@@ -55,6 +55,7 @@ export const requireAuth = async (
     // Step D: Attach the User to the Request
     // Now 'saveController' can access 'req.user.id
 
+    
     if (user) {
       await prisma.user.upsert({
         where: { id: user.id },

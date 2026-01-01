@@ -27,7 +27,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "puppeteer": "^24.32.0"
+    "puppeteer": "^24.32.0",
+    "supabase": "^2.70.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
