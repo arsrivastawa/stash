@@ -58,7 +58,7 @@ const NotFound = () => {
             </Button>
             
             <Button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/")}
               className="h-11 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 rounded-full px-6 shadow-lg shadow-indigo-500/25 transition-all hover:scale-105"
             >
               <Home className="mr-2 h-4 w-4" />
