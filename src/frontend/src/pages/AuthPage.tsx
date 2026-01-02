@@ -9,19 +9,19 @@ import { Loader2, Mail, Lock, Layers, User } from "lucide-react"; // Added User 
 
 const syncSessionToExtension = async (session: any) => {
   if (window.chrome && chrome.runtime) {
-    console.log("Attempting to sync with extension...");
+    // console.log("Attempting to sync with extension...");
     try {
       chrome.runtime.sendMessage(
         import.meta.env.VITE_EXTENSION_ID,
         { type: "SYNC_SESSION", session: session },
         (response) => {
           if (response && response.success) {
-            console.log("Extension synced successfully!");
+            // console.log("Extension synced successfully!");
           }
         }
       );
     } catch (err) {
-      console.log("Extension not found or not installed.");
+      // console.log("Extension not found or not installed.");
     }
   }
 };

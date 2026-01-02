@@ -38,12 +38,12 @@ const App: React.FC = () => {
           currentWindow: true,
         });
         if (tab && tab.url) {
-          console.log(tab);
+          // console.log(tab);
           setCurrentTabUrl(tab.url);
         }
       } catch (err) {
         // Silent fail – user can still paste manually
-        console.error("Unable to fetch active tab", err);
+        // console.error("Unable to fetch active tab", err);
       }
     }
 
@@ -99,7 +99,7 @@ const App: React.FC = () => {
     if (source === "manual") setIsManualSaving(true);
 
     try {
-      console.log(url);
+      // console.log(url);
       const res = await axios.post(
         `${API_URL}/save`,
         { url: url },
@@ -130,7 +130,7 @@ const App: React.FC = () => {
         });
       }
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       setStatus({
         type: "error",
         message:

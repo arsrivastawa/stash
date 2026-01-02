@@ -59,7 +59,7 @@ const AddItemModal = ({ isOpen, onClose, onItemAdded }: AddItemModalProps) => {
       onClose(); // Close modal
 
     } catch (error: any) {
-      console.error("Error saving item:", error);
+      // console.error("Error saving item:", error);
       toast({
         variant: "destructive",
         title: "Failed to save",

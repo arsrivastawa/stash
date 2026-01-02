@@ -114,7 +114,7 @@ const Dashboard = () => {
       setItems(formattedItems);
 
     } catch (error) {
-      console.error("Error fetching items:", error);
+      // console.error("Error fetching items:", error);
       toast({
         title: "Error loading stash",
         description: "Please check your connection and try again.",
@@ -175,7 +175,7 @@ const Dashboard = () => {
       });
 
     } catch (error) {
-      console.error("Error deleting item:", error);
+      // console.error("Error deleting item:", error);
       // 3. Revert if failed
       setItems(previousItems);
       toast({
